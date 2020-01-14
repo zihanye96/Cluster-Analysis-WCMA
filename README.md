@@ -1,5 +1,5 @@
 # Clustering The WCMA Digital Collection 
-This project was done for my Data Mining class at Williams College in spring 2018. Along with my partner, Yolanda Zhao, I analyzed images in the data set of digitized artworks to cluster the collection using sets of newly defined features that aim to capture (dis)similarity outside of traditional criterion (ex. artist, date, and genre)
+This project was done for my Data Mining class at Williams College in spring 2018. Along with my partner, Yolanda Zhao, I analyzed images in the data set of digitized artworks to cluster the collection using sets of newly defined features that aim to capture (dis)similarity outside of traditional criterion (ex. artist, date, and genre).
 
 
 ## Introduction
@@ -12,7 +12,10 @@ We present four new ways of thinking of dissimilarity between artworks (we refer
 etc.
 3. Centrality: whether or not there is a central object in the image or if there is some kind of framing in the image.
 4. Color: whether or not 40 percent or more of the pixels in an image are primarily of one color (red, orange, yellow, green, blue, purple, black, white, or gray). If not, then we categorize the image as “colorful”. Otherwise, the variable takes the name of the primary color.
+
+
 For the first three ways of defining dissimilarity, we used the k-means clustering algorithm (described in the methods section) to group the images into clusters based on features that we created. For the last one, we did not need to run a clustering algorithm because there is only one feature in it.
+
 Here is a list of terms that are frequently used in the sections below:
 1. Feature: a variable pertaining to a specific quality about an image.
 2. Feature set: a group of features that we will use to form clusters.
@@ -28,7 +31,9 @@ Here is a list of terms that are frequently used in the sections below:
 
 ### Feature Engineering 
 Here are the 11 features that we will be using to capture dissimilarity and cluster the collection. Each image will have a quantitative value for each of its 11 features.
-1. Center: As shown in the diagram above, we evenly split each (resized ) image into 64 boxes and take the absolute difference between the average hue of the 16 boxes in the center (colored in orange) and that of the 48 boxes surrounding them. This feature would help us identify if there’s something in the center of the image that might be the point of focus.
+1. Center: As shown in the diagram below, we evenly split each (resized ) image into 64 boxes and take the absolute difference between the average hue of the 16 boxes in the center (colored in orange) and that of the 48 boxes surrounding them. This feature would help us identify if there’s something in the center of the image that might be the point of focus.
+![Center](Images/Center.png)
+
 2. Edges: Measures how a picture’s edge varies in hue via standard deviation. The edge is defined as the outer 28 boxes . Some pictures include a frame, in which case there would be very small variability in the hue of the edge.
 3. Value Mean: Value is a measure of lightness/darkness. The average of an image’s value across all of its pixels can give us information on the overall brightness of an image relative to other images.
 4. Value Variance: Measures how much value varies among an image’s pixels. If there is low variability, then the pixels all tend to be either light or dark.
@@ -39,6 +44,7 @@ Here are the 11 features that we will be using to capture dissimilarity and clus
 9. 2-Neighbors-Above: We randomly selected 500 pixels from the image and looked at the correlation between the grayscale intensity of the selected pixel and that of the second pixel above it.
 10. Warmth: Measures the proportion of warm colored pixels, defined as pixels for which the hue is less than or equal to 90 or between 330 and 360.
 11. Color: Outside of these ten features that we used to form clusters, we also created the “color” feature, which we described in the introduction.
+
 We grouped the set of images based on 4 feature sets, which consist of a subset of the 11 features above. “Colorful” is special because it forms a feature set by itself, on which we did not need to run clustering algorithm. Each feature set is supposed to represent one quality that pertains to dissimilarity. For example, the “complexity” feature set contains a set of features that all aim to capture the uniformity/complexity of a given image, including saturation variance. Using the clustering algorithm, we can theoretically group images of similar levels of complexity into their respective clusters.
 
 ### Measuring Dissmilarity 
@@ -47,12 +53,7 @@ In order to use these features to group the images into clusters, we used a dist
 Note that we have to standardize the values so that the values for the features are on the same scale, so that one feature that has values in the 1000’s and another that has values in the 10’s can have the same impact on distance. We can do this for each feature in our feature set, and then sum the absolute differences. This gives us the Manhattan distance between image A and image B, for that given feature set. Essentially, a larger Manhattan distance implies a more significant difference in the features of two images for a given feature set.
 
 ### Clustering Algorithm 
-In order to separate the set of images into clusters, we used a clustering algorithm. In essence, a clustering algorithm uses given dissimilarity measures to group images into clusters. The goal is to group the images that are least distant from each other (and therefore most similar) into the same clusters. We chose to implement the k-means partitioning algorithm because it is computationally efficient, intuitive, and generally works well for large datasets, such as the one we are dealing with for this project. Here’s how the k-means clustering algorithm works:
-• Step 1: Choose k.
-• Step 2: Randomly assigns a data point (in this case, an image) to a group.
-• Step 3: Estimates the group’s means.
-• Step 4: Groups each data point with the nearest mean. The partitions here (see Figure 2) represent the groups, with the colored circles showing the means and the squares showing the rest of the data points.
-• Step 5: Repeat steps 3 - 4 until the group membership doesn’t change. The partitions here (see Figure 2) represent the final groupings.
+In order to separate the set of images into clusters, we used the k-means partitioning algorithm because it is computationally efficient, intuitive, and generally works well for large datasets, such as the one we are dealing with for this project. 
 In order to run the k-means partitioning algorithm, we needed to pre-specify the number of clusters for each feature set (the number of clusters is referred to as k). To do this, we examined average silhouette plots, which plot the average silhouette on the y-axis and k on the x-axis. Essentially, average silhouette captures how well the clusters are separated from each other. The higher the average silhouette, the more clearly separated the clusters are. Since we wanted the clusters to be distinct from each other, we wanted as high of an average silhouette as possible. The average silhouette plot we got for the first feature set is shown below.
 For both the first and the second feature set, we found that the average silhouette was greatest at k=2. We were hesitant to use such a small k, as we would risk having dissimilar images clustered together, since the nearest group means might be very different from the features of a certain image, but that image would still be grouped in that cluster because its means are the closest. On the other hand, if we used a large k, we would risk having two otherwise similar images that should be grouped together being in two different groups, since the differences between two groups’ means can be very small (which suggests the two groups can potentially just be one group).
 We decided to use k=5 for the first feature set and k=6 for the second feature set, as anything less would probably result in images within each cluster not being as similar, and any value of k between 5 and 20 and 6 and 20, respectively, resulted in a significantly lower average silhouette. For the third feature set, centrality, we decided that it made sense to use k=2, as the algorithm can probably group centered images and un-centered images into two separate clusters.
@@ -64,19 +65,23 @@ We visualized the cluster results by creating a composite image for each cluster
 
 ### Complexity
 
-"Complexity" measures the variability of color and brightness of an image. As we can see from the composite images(See Figure 4), there is a clear difference between the most complex groups (whose composites are on the right end) and the least complex groups. Note that the “scale” we present here is not objective - one can easily rearrange the five composites based on how visually complex one perceives each one to be. We use letters to represent each composite, and the number in the parenthesis represents the size of the cluster. For example, A (114) means that composite A is composed of 114 images.
+"Complexity" measures the variability of color and brightness of an image. As we can see from the composite images (shown below), there is a clear difference between the most complex groups (whose composites are on the right end) and the least complex groups. Note that the “scale” we present here is not objective - one can easily rearrange the five composites based on how visually complex one perceives each one to be. We use letters to represent each composite, and the number in the parenthesis represents the size of the cluster. For example, A (114) means that composite A is composed of 114 images.
+![Complexity](Images/Complexity.png)
 
 ### Personality 
 
-As we can see from the composite images(See Figure 5), each one has a different “personality” to it. For instance, composite E appears to be more gloomy than composite D.
+As we can see from the composite images (shown below), each one has a different “personality” to it. For instance, composite E appears to be more gloomy than composite D.
+![Personality](Images/Personality.png)
 
 ### Centrality 
 
-Ideally, one of these two composites should not have any discernible edge. However, as shown here (See Figure 6), both composites images have a clear separation between the central subject and the edge, with the first one’s central subject spreading out slightly more to its edges.
+Ideally, one of these two composites should not have any discernible edge. However, as shown below, both composites images have a clear separation between the central subject and the edge, with the first one’s central subject spreading out slightly more to its edges.
+![Centrality](Images/Centrality.png)
 
 ### Color  
 
-We are pleased to present the composite results (See Figure 7) for each color group. We believe that this feature did a good job at grouping the colors, as most of the 9 colors are clearly and uniquely visible in its corresponding composite.
+We are pleased to present the composite results below for each color group. We believe that this feature did a good job at grouping the colors, as most of the 9 colors are clearly and uniquely visible in its corresponding composite.
+![Color](Images/Color.png)
 
 ## Discussion 
 Compared to more traditional means of categorizing art, such as time period, artist, and genre, the features we used to group images are based on their inherent visual qualities, such as luminosity and hue. On one hand, this speaks to the limitation to our engagement with the artwork because we overlooked certain objective information that could assist us in categorizing the images and understand their positions in a socio-historical context. On the other hand, by not including these kinds of conventional information in our clustering, we open up the possibility of reading an artwork in a more artistically autonomous manner, as we only relied on the visual information of the images, grouping artworks by the “art” itself as opposed to contextual information about a piece of art.
