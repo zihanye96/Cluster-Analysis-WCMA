@@ -32,8 +32,10 @@ Here is a list of terms that are frequently used in the sections below:
 ### Feature Engineering 
 Here are the 11 features that we will be using to capture dissimilarity and cluster the collection. Each image will have a quantitative value for each of its 11 features.
 1. Center: As shown in the diagram below, we evenly split each (resized ) image into 64 boxes and take the absolute difference between the average hue of the 16 boxes in the center (colored in orange) and that of the 48 boxes surrounding them. This feature would help us identify if there's something in the center of the image that might be the point of focus.
+<p align="center">
+  <![Center](Images/Center.png) />
+</p>
 
-![Center](Images/Center.png)
 
 2. Edges: Measures how a picture's edge varies in hue via standard deviation. The edge is defined as the outer 28 boxes . Some pictures include a frame, in which case there would be very small variability in the hue of the edge.
 3. Value Mean: Value is a measure of lightness/darkness. The average of an image's value across all of its pixels can give us information on the overall brightness of an image relative to other images.
