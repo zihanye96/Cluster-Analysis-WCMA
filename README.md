@@ -3,7 +3,7 @@ This project was done for my Data Mining class at Williams College in spring 201
 
 
 ## Introduction
-The Williams College Museum of Artâ€™s Mellon Digital Project gives students, faculty, researchers, artists and many others easy access to downloading metadata and thumbnail images for the entire WCMA collection. The availability of such a large collection of over 5000 digitized artworks opens up the possibility of creatively engaging with these works using tools that are not traditionally available to art historians and curators, such as machine learning and data visualization.
+The Williams College Museum of Artâ€s Mellon Digital Project gives students, faculty, researchers, artists and many others easy access to downloading metadata and thumbnail images for the entire WCMA collection. The availability of such a large collection of over 5000 digitized artworks opens up the possibility of creatively engaging with these works using tools that are not traditionally available to art historians and curators, such as machine learning and data visualization.
 Typically, art historians and curators define dis(similarity) between artworks based on criterion such as artist, genre, date, geography, etc. Our primary goal for this project is to cluster a manageable proportion of the WCMA collection (randomly selected 500 images) according to a set of newly defined features that aim to capture (dis)similarity outside of these typical and rigidly defined categories.
 
 We present four new ways of thinking of dissimilarity between artworks (we refer to these as feature sets):
