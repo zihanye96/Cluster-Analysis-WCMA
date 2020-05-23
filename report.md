@@ -30,7 +30,7 @@ Here is a list of terms that are frequently used in the sections below:
 Here are the 11 features that we will be using to capture dissimilarity and cluster the collection. Each image will have a quantitative value for each of its 11 features.
 1. Center: As shown in the diagram below, we evenly split each (resized ) image into 64 boxes and take the absolute difference between the average hue of the 16 boxes in the center (colored in orange) and that of the 48 boxes surrounding them. This feature would help us identify if there's something in the center of the image that might be the point of focus.
 
-![Center](Images/Center.png) 
+![Center](composites/Center.png) 
 
 
 
@@ -67,23 +67,23 @@ We visualized the cluster results by creating a composite image for each cluster
 
 "Complexity" measures the variability of color and brightness of an image. As we can see from the composite images (shown below), there is a clear difference between the most complex groups (whose composites are on the right end) and the least complex groups. Note that the 
 "scale" we present here is not objective - one can easily rearrange the five composites based on how visually complex one perceives each one to be. We use letters to represent each composite, and the number in the parenthesis represents the size of the cluster. For example, A (114) means that composite A is composed of 114 images.
-![Complexity](Images/Complexity.png)
+![Complexity](composites/Complexity.png)
 
 ### Personality 
 
 As we can see from the composite images (shown below), each one has a different 
 "personality" to it. For instance, composite E appears to be more gloomy than composite D.
-![Personality](Images/Personality.png)
+![Personality](composites/Personality.png)
 
 ### Centrality 
 
 Ideally, one of these two composites should not have any discernible edge. However, as shown below, both composites images have a clear separation between the central subject and the edge, with the first one's central subject spreading out slightly more to its edges.
-![Centrality](Images/Centrality.png)
+![Centrality](composites/Centrality.png)
 
 ### Color  
 
 We are pleased to present the composite results below for each color group. We believe that this feature did a good job at grouping the colors, as most of the 9 colors are clearly and uniquely visible in its corresponding composite.
-![Color](Images/Color.png)
+![Color](composites/Color.png)
 
 ## Discussion 
 Compared to more traditional means of categorizing art, such as time period, artist, and genre, the features we used to group images are based on their inherent visual qualities, such as luminosity and hue. On one hand, this speaks to the limitation to our engagement with the artwork because we overlooked certain objective information that could assist us in categorizing the images and understand their positions in a socio-historical context. On the other hand, by not including these kinds of conventional information in our clustering, we open up the possibility of reading an artwork in a more artistically autonomous manner, as we only relied on the visual information of the images, grouping artworks by the "art" itself as opposed to contextual information about a piece of art.
