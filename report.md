@@ -28,7 +28,7 @@ Here is a list of terms that are frequently used in the sections below:
 
 ### Feature Engineering 
 Here are the 11 features that we will be using to capture dissimilarity and cluster the collection. Each image will have a quantitative value for each of its 11 features.
-1. Center: As shown in the diagram below, we evenly split each (resized ) image into 64 boxes and take the absolute difference between the average hue of the 16 boxes in the center (colored in orange) and that of the 48 boxes surrounding them. This feature would help us identify if there's something in the center of the image that might be the point of focus.
+1. Center: As shown in the diagram below, we evenly split each (resized) image into 64 boxes and take the absolute difference between the average hue of the 16 boxes in the center (colored in orange) and that of the 48 boxes surrounding them. This feature would help us identify if there's something in the center of the image that might be the point of focus.
 
 ![Center](composites/Center.png) 
 
@@ -40,7 +40,7 @@ Here are the 11 features that we will be using to capture dissimilarity and clus
 5. Saturation Mean: Saturation measures the intensity of a color. The mean of an image's saturation across all of its pixels can give us information on the overall color intensity of an image relative to other images.
 6. Saturation Variance: Measures how much saturation varies among an image's pixels. If there is low variability, then the pixels all tend to have intense colors or not.
 7. Dominance: Using the k-means clustering algorithm (described in the methods section), we formed 8 clusters for the pixels in an image based on their values of hue, saturation, value. We recognized that having only eight clusters to represent color might not be able to capture all the unique colors that can compose an image, but we decided that eight was a good number to represent the fundamental colors, since the most common retail packages for crayons are in multiples of eight. Dominance measures the proportion of pixels that are in the largest cluster. If an image has "dominance" of .8, that means 80 percent of the pixels of the image are similar in hue, saturation, and value.
-8. 2-Neighbors-Left: We randomly selected 500 pixels from the image and looked at the corre- lation between the grayscale intensity of the selected pixel and that of the second pixel to its left.
+8. 2-Neighbors-Left: We randomly selected 500 pixels from the image and looked at the correlation between the grayscale intensity of the selected pixel and that of the second pixel to its left.
 9. 2-Neighbors-Above: We randomly selected 500 pixels from the image and looked at the correlation between the grayscale intensity of the selected pixel and that of the second pixel above it.
 10. Warmth: Measures the proportion of warm colored pixels, defined as pixels for which the hue is less than or equal to 90 or between 330 and 360.
 11. Color: Outside of these ten features that we used to form clusters, we also created the "color" feature, which we described in the introduction.

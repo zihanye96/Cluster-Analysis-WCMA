@@ -1,12 +1,13 @@
 ---
-title: "Project 3"
+title: "Clustering WMCA Collection"
 author: "Zihan Ye, Yolanda Zhao"
 date: "4/14/2018"
 output: pdf_document
 ---
 
-#Code
 ```{r, message=FALSE, warning=FALSE, echo=FALSE}
+## load required packages
+
 library(imager)
 library(RColorBrewer)
 library(cluster)
@@ -15,22 +16,28 @@ library(dendextend)
 library(colorspace)
 ```
 
-```{r,include=FALSE}
-BWNeighbourCorr <- function(image,offset=2,position="left") {
-  if (position=="left"|position=="right"){
-    stencil <- data.frame(dx=c(0,-offset,offset),dy=c(0,0,0))
-# We randomly select 500 pixels from the resized image 
-    image2 <- resize(image,128,128)
+```{r, include=FALSE}
+
+## function that randomly selects 500 pixels and returns the greyscale correlation of each
+## pixel and a specified neighboring pixel (ex. 2 pixels to the left) 
+BWNeighbourCorr <- function(image, offset=2, position="left") {
+  
+  if (position=="left" | position=="right"){
+    stencil <- data.frame(dx=c(0, -offset, offset), dy=c(0,0,0))
+    
+    ## resize image, convert to greyscale, and randomly select 500 pixels
+    image2 <- resize(image, 128, 128)
     image.bw <- grayscale(image2)
-    pos.x <- round(runif(500,2*offset,width(image.bw)-offset))
-    pos.y <- round(runif(500,2*offset,height(image.bw)-offset))
+    pos.x <- round(runif(500, 2*offset, width(image.bw) - offset))
+    pos.y <- round(runif(500, 2*offset, height(image.bw) - offset))
     pos <- cbind(pos.x,pos.y)
   
-    val <- alply(pos,1,function(v) get.stencil(image.bw,stencil,x=v[1],y=v[2]))
+    val <- apply(pos, 1, function(v) get.stencil(image.bw, stencil, x=v[1], y=v[2]))
     mat <- do.call(rbind,val)
   
     cor_LeftNeighbour <- cor(mat)[1,2] # New Feature 1
     cor_RightNeighbour <- cor(mat)[1,3] # New Feature 2 
+    
     if (position=="left"){
       return (cor_LeftNeighbour)
     }
@@ -39,20 +46,23 @@ BWNeighbourCorr <- function(image,offset=2,position="left") {
     }
   }
   
-  if (position=="up"|position=="down"){
-    stencil <- data.frame(dx=c(0,0,0),dy=c(0,-offset,offset))
-# We randomly select 500 pixels from the resized image 
-    image2 <- resize(image,128,128)
+  if (position=="up" | position=="down"){
+    
+    stencil <- data.frame(dx=c(0,0,0), dy=c(0, -offset, offset))
+    
+    ## resize image, convert to greyscale, and randomly select 500 pixels
+    image2 <- resize(image, 128, 128)
     image.bw <- grayscale(image2)
-    pos.x <- round(runif(500,2*offset,width(image.bw)-offset))
-    pos.y <- round(runif(500,2*offset,height(image.bw)-offset))
-    pos <- cbind(pos.x,pos.y)
+    pos.x <- round(runif(500, 2*offset, width(image.bw)-offset))
+    pos.y <- round(runif(500, 2*offset, height(image.bw)-offset))
+    pos <- cbind(pos.x, pos.y)
   
-    val <- alply(pos,1,function(v) get.stencil(image.bw,stencil,x=v[1],y=v[2]))
-    mat <- do.call(rbind,val)
+    val <- alply(pos, 1, function(v) get.stencil(image.bw, stencil, x=v[1], y=v[2]))
+    mat <- do.call(rbind, val)
   
     cor_DownNeighbour <- cor(mat)[1,2] # New Feature 1
     cor_UpNeighbour <- cor(mat)[1,3] # New Feature 2 
+    
     if (position=="Up"){
       return (cor_UpNeighbour)
     }
@@ -60,28 +70,39 @@ BWNeighbourCorr <- function(image,offset=2,position="left") {
       return (cor_DownNeighbour)
     }
   }
+  
 }
 ```
 
 
 ```{r,include=FALSE}
+## function that returns how "warm" an image is based on proportion of "warm" colored pixels
 warmth <- function(image){
+  
   m <- resize(image,128,128)
   
-  h =rgb2hsv(matrix(c(R(m),G(m),B(m)),byrow=TRUE,nrow=3),maxColorValue = 1)[1,]*360 #calculate hues for each pixel
+  ## calculate hues for each pixel
+  h = rgb2hsv(matrix(c(R(m),G(m),B(m)),byrow=TRUE,nrow=3),maxColorValue = 1)[1,]*360 
   
-  warmth <- (length(which(h<=90)) + length(which(h>=330 & h <= 360)))/length(h) # Proportion of Warm Colored Pixels 
-  
+  # calculate proportion of "warm" colored pixels
+  warmth <- (length(which(h<=90)) + length(which(h>=330 & h <= 360)))/length(h) 
   return (warmth)
   
 }
 ```
 
 ```{r}
+## function that returns the dominant color in an image
+
 colorful<-function(m){
-  h =rgb2hsv(matrix(c(R(m),G(m),B(m)),byrow=TRUE,nrow=3),maxColorValue = 1)[1,]*360
-  s =rgb2hsv(matrix(c(R(m),G(m),B(m)),byrow=TRUE,nrow=3),maxColorValue = 1)[2,]*360 
-  v =rgb2hsv(matrix(c(R(m),G(m),B(m)),byrow=TRUE,nrow=3),maxColorValue = 1)[3,]*360 
+  
+  ## extract hue, saturation, and value from rgb image
+  hsv = rgb2hsv(matrix(c(R(m),G(m),B(m)),byrow=TRUE,nrow=3), maxColorValue = 1)
+  h = hsv[1,]*360
+  s = hsv[2,]*360 
+  v = hsv[3,]*360 
+  
+  ## initialize color values
   red<-0
   orange<-0
   yellow<-0
@@ -91,111 +112,139 @@ colorful<-function(m){
   black<-0
   white<-0
   gray<-0
+  
+  ## count the number of pixels of each color
   for(i in 1:length(h)){
     if(v[i]<=15){
-      black=black+1
+      black = black+1
     } else if(v[i]>=95 & s[i] <=2){
-      white=white+1
+      white = white+1
     } else if(v[i]<95 & v[i]>=35 & s[i] <=5){
-      gray=gray+1
+      gray = gray+1
     } else if(h[i]<25|h[i]>=330){
-      red<-red+1
+      red = red+1
     } else if (h[i]<50&&h[i]>=25){
-      orange<-orange+1
+      orange = orange+1
     } else if (h[i]<70&&h[i]>=50){
-      yellow<-yellow+1
+      yellow = yellow+1
     } else if (h[i]<160&&h[i]>=70){
-      green<-green+1
+      green = green+1
     } else if (h[i]<250&&h[i]>=160){
-      blue<-blue+1
+      blue = blue+1
     } else {
-      purple<-purple+1
+      purple = purple+1
     }
   }
+  
   threshold<-length(h)*.4
   colors <- c(red, orange, yellow, green, blue, purple, black, white, gray)
   colorNames <- c("red", "orange", "yellow", "green", "blue", "purple", "black", "white", "gray")
+  
+  ## if over 40% of pixels is a given color, then the image is dominated by that color, otherwise we say it's "colorful"
   if(max(colors)>threshold){
     colorResult<-colorNames[which.max(colors)]
   } else {
     colorResult<-"Colorful"
   }
+  
   return(colorResult)
 }
 ```
 
 ```{r}
 feat<-function(m){
-d = dim(m)[1:2] #get the height and width of image
-m<-resize(m, d[1]%/%8*8, d[2]%/%8*8) #convert dimensions into the nearest multiples of 8 smaller than that dimension
-d = dim(m)[1:2]
+  
+  ## get the height and width of image
+  d = dim(m)[1:2] 
+  
+  ## convert dimensions into the nearest multiples of 8 smaller than that dimension
+  m<-resize(m, d[1]%/%8*8, d[2]%/%8*8) 
+  d = dim(m)[1:2]
+  
+  ## get hue, saturation, value from rgb image
+  hsv =t(rgb2hsv(matrix(c(R(m),G(m),B(m)),byrow=TRUE,nrow=3),maxColorValue = 1))
+  h<-matrix(hsv[,1]*360,nrow=d[2],ncol=d[1],byrow=TRUE)
+  s<-hsv[,2]*360
+  v<-hsv[,3]*360
+  
+  ## Feature 1: Center
+  ## quantifies how much the center of the image differs from the surrounding part of the image
+  
+  ## the idea is to evenly split each image into 64 boxes and take absolute difference between the average hue of 
+  ## the center 16 boxes and the average hue of the 48 surrounding boxes
+  foo = sapply(1:8, function(j) sapply(1:8, function(i) mean(h[(i-1)*d[2]/8 + (1:d[2]/8), (j-1)*d[1]/8 + (1:d[1]/8)])))
+  centerDiff = abs(mean(foo[3:6,3:6])-mean(c(foo[1:2,1:8], foo[7:8,1:8], foo[3:6,1:2], foo[3:6,7:8])))
+  
+  
+  ## Feature 2: Edges
+  ## get the standard deviation of the hues of the pixels on the edge
+  ## edges are the outer 28 boxes if the image is divided into 8x8 boxes
+  
+  edges = c(foo[1:8,1], foo[1:8,8], foo[1,2:7], foo[8,2:7])
+  edges<-sd(edges)
+  
+  
+  ## Feature 3: Value mean
+  valmean<-mean(v)
+  
+  ## Feature 4: Value variance
+  valvar<-var(v)
+  
+  ## Feature 5: Saturation mean
+  satmean<-mean(s)
+  
+  ## Feature 6: Saturation variance
+  satvar<-var(s)
+  
+  ## Feature 7: Dominance
+  
+  ## the idea is to split the pixels into 5 groups by similarity and see the proportion of the largest pixel group
+  ## ex. if 90% of pixels are in the largest pixel group, the image is dominated by a type of pixel
+  huegroups<-kmeans(hsv,8,nstart=5)
+  clusinfo<-sort(table(huegroups[1]),decreasing=TRUE)
+  largestcluster<-as.numeric(names(clusinfo[1]))
+  clustersize<-as.numeric(clusinfo[1])
+  dominance<-clustersize/dim(hsv)[1]
+  
+  ## Feature 8: Left Neighbors
+  left<-BWNeighbourCorr(m, position="left")
+  
+  ## Feature 9: Up Neighbors
+  up<-BWNeighbourCorr(m, position="up")
+  
+  ## Feature 10: Warmth
+  warm<-warmth(m)
+  
+  ## Feature 11: Colorful
+  colorful<-colorful(m)
+  
+  ## return the list of features
+  return(c(centerDiff, edges, valmean, valvar, satmean, satvar, dominance, left, up, warm, colorful))
 
-hsv =t(rgb2hsv(matrix(c(R(m),G(m),B(m)),byrow=TRUE,nrow=3),maxColorValue = 1))
-h<-matrix(hsv[,1]*360,nrow=d[2],ncol=d[1],byrow=TRUE)
-s<-hsv[,2]*360
-v<-hsv[,3]*360
-
-#Feature 1: Center
-foo = sapply(1:8,function(j) sapply(1:8,function(i) mean(h[(i-1)*d[2]/8 + (1:d[2]/8),(j-1)*d[1]/8 + (1:d[1]/8)])))
-centerDiff<-abs(mean(foo[3:6,3:6])-mean(c(foo[1:2,1:8], foo[7:8,1:8], foo[3:6,1:2], foo[3:6,7:8])))
-
-
-#Feature 2: Edges
-##Edges are the outer 28 boxes if the image is divided into 8x8 boxes
-edges = c(foo[1:8,1], foo[1:8,8], foo[1,2:7], foo[8,2:7])
-edges<-sd(edges)
-
-
-#Feature 3: Value mean
-
-valmean<-mean(v)
-
-#Feature 4: Value variance
-valvar<-var(v)
-
-#Feature 5: Saturation mean
-satmean<-mean(s)
-
-#Feature 6: Saturation variance
-satvar<-var(s)
-
-#Feature 7: Dominance
-huegroups<-kmeans(hsv,8,nstart=5)
-clusinfo<-sort(table(huegroups[1]),decreasing=TRUE)
-largestcluster<-as.numeric(names(clusinfo[1]))
-clustersize<-as.numeric(clusinfo[1])
-dominance<-clustersize/dim(hsv)[1]
-
-#Feature 8: Left Neighbors
-left<-BWNeighbourCorr(m, position="left")
-
-#Feature 9: Up Neighbors
-up<-BWNeighbourCorr(m, position="up")
-
-#Feature 10: Warmth
-warm<-warmth(m)
-
-#Feature 11: Colorful
-colorful<-colorful(m)
-
-c(centerDiff, edges, valmean, valvar, satmean, satvar, dominance, left, up, warm, colorful)
 }
 ```
 
 
 ```{r, cache=TRUE}
-files = list.files('~/Desktop/WCMA Public Thumbs',pattern = '*jpg$',full.name=TRUE) 
+## get a list of file names and randomly sample 500
+files = list.files('~/Desktop/WCMA Public Thumbs', pattern = '*jpg$', full.name=TRUE) 
 set.seed(1)
 samp = sample(files,500)
 
-features<-matrix(nrow=500,ncol=11)
+## initialize data frame to store features in (500 images x 11 features + image file name)
+features<-matrix(nrow=500, ncol=11)
 results<-cbind(samp,features)
+
 colnames(results)<-c("Image", "Center", "Edges", "Value Mean", "Value Variance", "Saturation Mean", "Saturation Variance", "Dominance", "Left Neighbor", "Up Neighbor", "Warmth", "Colorful?")
+
+## load in images and generate features for each image
+
 for(i in 1:500){
-m <- load.image(samp[i])
-x<-feat(m)
-results[i,2]<-as.numeric(x[1])
-results[i,3]<-as.numeric(x[2])
+  
+  m <- load.image(samp[i])
+  x<-feat(m)
+  results[i,2]<-as.numeric(x[1])
+  results[i,3]<-as.numeric(x[2])
   results[i,4]<-as.numeric(x[3])
   results[i,5]<-as.numeric(x[4])
   results[i,6]<-as.numeric(x[5])
@@ -205,34 +254,43 @@ results[i,3]<-as.numeric(x[2])
   results[i,10]<-as.numeric(x[9])
   results[i,11]<-as.numeric(x[10])
   results[i,12]<-x[11]
+  
 }
 ```
 
 ```{r}
-#fix this
+## clean up the resulting dataframe
 results2<-unfactor(results[,2:12])
 results3<-matrix(results2,nrow=500,ncol=500)
 results4<-as.numeric(results3[,1:11])
 results5<-matrix(results4,nrow=500,ncol=11)
 dismat<-daisy(results5,metric='manhattan', stand=TRUE)
+
 ```
 
 
 ```{r}
-plot(2:20, sapply(2:20, function(k) mean(silhouette(kmeans(results5, k)$cluster, dismat)[, 3])), type = "b", ylab = "Avg Silhouette", xlab = "K")
-clustalgo<-kmeans(results5, 7, nstart = 5)
-#do this three times, figure out column names
+## graphically determine optimal number of clusters (between 2-20)
+plot(2:20, sapply(2:20, function(k) mean(silhouette(kmeans(results5, k)$cluster, dismat)[, 3])), type = "b", 
+     ylab = "Avg Silhouette", xlab = "K")
+
+## cluster the sample of 500 images into 7 clusters 
+clusters <- kmeans(results5, 7, nstart = 5)
 ```
 
 ```{r}
-#add colorful in the end
+## add a column indicating which cluster the image belongs to
 results<-cbind(results[,1],results5, clusters)
 colnames(results)<-c("Image", "Center", "Edges", "Value Mean", "Value Variance", "Saturation Mean", "Saturation Variance", "Dominance", "Left Neighbor", "Up Neighbor", "Warmth", "Colorful?", "Cluster")
+
+## output a final data frame, sorted by cluster
 final<-results[order(results[,12]),]
 ```
 
-##Cluster 1
+## Cluster 1
 ```{r, cache=TRUE}
+## display 3 random images from cluster 1
+
 set.seed(0)
 index<-sample(which(clusters==1),3)
 m1 <- load.image(samp[index[1]])
@@ -244,8 +302,10 @@ plot(m2)
 plot(m3)
 ```
 
-##Cluster 2
+## Cluster 2
 ```{r,cache=TRUE}
+## display 3 random images from cluster 2
+
 set.seed(0)
 index<-sample(which(clusters==2),3)
 m1 <- load.image(samp[index[1]])
@@ -257,8 +317,10 @@ plot(m2)
 plot(m3)
 ```
 
-##Cluster 3
+## Cluster 3
 ```{r,cache=TRUE}
+## display 3 random images from cluster 3
+
 set.seed(0)
 index<-sample(which(clusters==3),3)
 m1 <- load.image(samp[index[1]])
@@ -270,8 +332,10 @@ plot(m2)
 plot(m3)
 ```
 
-##Cluster 4
+## Cluster 4
 ```{r,cache=TRUE}
+## display 3 random images from cluster 4
+
 set.seed(0)
 index<-sample(which(clusters==4),3)
 m1 <- load.image(samp[index[1]])
@@ -283,8 +347,10 @@ plot(m2)
 plot(m3)
 ```
 
-##Cluster 5
+## Cluster 5
 ```{r,cache=TRUE}
+## display 3 random images from cluster 5
+
 set.seed(0)
 index<-sample(which(clusters==5),3)
 m1 <- load.image(samp[index[1]])
@@ -296,8 +362,10 @@ plot(m2)
 plot(m3)
 ```
 
-##Cluster 6
+## Cluster 6
 ```{r,cache=TRUE}
+## display 3 random images from cluster 6
+
 set.seed(0)
 index<-sample(which(clusters==6),3)
 m1 <- load.image(samp[index[1]])
@@ -309,8 +377,10 @@ plot(m2)
 plot(m3)
 ```
 
-##Cluster 7
+## Cluster 7
 ```{r,cache=TRUE}
+## display 3 random images from cluster 7
+
 set.seed(0)
 index<-sample(which(clusters==7),3)
 m1 <- load.image(samp[index[1]])
@@ -322,34 +392,10 @@ plot(m2)
 plot(m3)
 ```
 
-##Cluster 8
-```{r,cache=TRUE}
-set.seed(0)
-which(clusters==8)
-m1 <- load.image(samp[121])
-plot(m1)
-```
-
-##Cluster 9
-```{r,cache=TRUE}
-set.seed(0)
-index<-sample(which(clusters==9),2)
-m1 <- load.image(samp[index[1]])
-m2 <- load.image(samp[index[2]])
-par(mfrow=c(1,3))
-plot(m1)
-plot(m2)
-```
-##Cluster 10
-```{r,cache=TRUE}
-set.seed(0)
-which(clusters==10)
-m1 <- load.image(samp[330])
-plot(m1)
-```
-
 ```{r}
+## function that will average the rgb values across each cluster and output a "composite" image
 composite<-function(x){
+  
   rValues <- sapply(x,function(i) {R(resize(load.image(samp[i]),128,128))})
   gValues <- sapply(x,function(i) {G(resize(load.image(samp[i]),128,128))})
   bValues <- sapply(x,function(i) {B(resize(load.image(samp[i]),128,128))})
@@ -358,18 +404,12 @@ composite<-function(x){
   gMean <- apply(gValues,1,mean)
   bMean <- apply(bValues,1,mean)
   
+  
   plot(as.cimg(c(rMean,gMean,bMean)))
 }
 
+## output a composite for each cluster
 lapply(unique(clusters),function(x){composite(which(clusters==x))})
 
-```
-
-```{r}
-
-```
-
-```{r}
-wcma<-read.csv("/Users/Zihanye 1/Desktop/wcma-collection.csv")
 ```
 
